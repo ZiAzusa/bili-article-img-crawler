@@ -1,6 +1,7 @@
 from requests import get
 from json import loads
 from time import sleep
+from tqdm import tqdm
 import os
 
 print("欢迎使用B站专栏图片爬虫\n" + "-" * 30)
@@ -30,11 +31,25 @@ while length == 30:
         data = html.split('__INITIAL_STATE__=')[-1]
         data = data.split('"')
         imgs = ["https:" + j.replace("\\u002F", "/").replace("\\", "/")[:-1] for j in data if 'hdslb.com' in j if not 'http' in j if not '/' in j]
+        imgID = 0
         for j in imgs:
-            filename = j.split('/')[-1]
-            img = get(j).content
-            with open(uid + "/" + i + "/" + filename ,'wb') as f:
-                f.write(img)
+            imgID += 1
+            filepath = uid + "/" + i + "/" + str(imgID) + "." + j.split('.')[-1]
+            if os.path.exists(filepath):
+                print("第" + str(imgID) + "张图已存在")
+                continue
+            res = get(j, stream=True)
+            total = int(res.headers.get('content-length', 0))
+            with open(filepath, 'wb') as f, tqdm(
+                desc="第" + str(imgID) + "张图",
+                total=total,
+                unit='iB',
+                unit_scale=True,
+                unit_divisor=1024,
+            ) as bar:
+                for data in res.iter_content(chunk_size=1024):
+                    size = f.write(data)
+                    bar.update(size)
         print("CV" + i + "下载完成，共下载图片：" + str(len(imgs)))
     length = len(ids)
 print("\033[1;32m全部图片下载完成！\033[0m!\n程序将在3秒后退出...")
