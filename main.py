@@ -1,6 +1,7 @@
 from requests import get
 from json import loads
 from time import sleep
+from ua import randUA
 from tqdm import tqdm
 import os
 
@@ -17,7 +18,7 @@ while length == 30:
     api = "https://api.bilibili.com/x/space/article?ps=30&mid=" + uid + "&pn=" + str(pn)
     res = loads(get(api).content)
     if (res['code'] != 0):
-        print("\033[1;31m错误！\n错误代码：" + str(res['code']) + "\n错误信息：" + res['message'] + "\033[0m!\n程序将在3秒后退出...")
+        print("\033[1;31m错误！\n错误代码：" + str(res['code']) + "\n错误信息：" + res['message'] + "\033[0m\n程序将在3秒后退出...")
         sleep(3)
         exit()
     ids = [str(i['id']) for i in res['data']['articles']]
@@ -26,7 +27,11 @@ while length == 30:
             os.makedirs(uid + "/" + i)
         print("正在下载：CV" + i)
         url = "https://www.bilibili.com/read/cv" + i
-        html = get(url).content
+        headers = {
+            "User-Agent": randUA(),
+            "Referer": url
+        }
+        html = get(url, headers=headers).content
         html = str(html).encode('utf8').decode('unicode_escape')
         data = html.split('__INITIAL_STATE__=')[-1]
         data = data.split('"')
@@ -38,7 +43,7 @@ while length == 30:
             if os.path.exists(filepath):
                 print("第" + str(imgID) + "张图已存在")
                 continue
-            res = get(j, stream=True)
+            res = get(j, headers=headers, stream=True)
             total = int(res.headers.get('content-length', 0))
             with open(filepath, 'wb') as f, tqdm(
                 desc="第" + str(imgID) + "张图",
@@ -52,6 +57,6 @@ while length == 30:
                     bar.update(size)
         print("CV" + i + "下载完成，共下载图片：" + str(len(imgs)))
     length = len(ids)
-print("\033[1;32m全部图片下载完成！\033[0m!\n程序将在3秒后退出...")
+print("\033[1;32m全部图片下载完成！\033[0m\n程序将在3秒后退出...")
 sleep(3)
 exit()
