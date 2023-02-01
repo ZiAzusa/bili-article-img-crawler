@@ -25,6 +25,8 @@ while length == 30:
     for i in ids:
         if not os.path.exists(uid + "/" + i):
             os.makedirs(uid + "/" + i)
+        else:
+            continue
         print("正在下载：CV" + i)
         url = "https://www.bilibili.com/read/cv" + i
         headers = {
@@ -34,8 +36,14 @@ while length == 30:
         html = get(url, headers=headers).content
         html = str(html).encode('utf8').decode('unicode_escape')
         data = html.split('__INITIAL_STATE__=')[-1]
-        data = data.split('"')
-        imgs = ["https:" + j.replace("\\u002F", "/").replace("\\", "/")[:-1] for j in data if 'hdslb.com' in j if not 'http' in j if not '/' in j]
+        if "&#34;" in data:
+            data = data.split('&#34;')
+            imgs = [j.replace("\\u002F", "/").replace("\\", "/") for j in data if 'hdslb.com' in j if not '/' in j]
+        else:
+            data = data.split('"')
+            imgs = ["https:" + j.replace("\\u002F", "/").replace("\\", "/")[:-1] for j in data if 'hdslb.com' in j if not 'http' in j if not '/' in j]
+            imgs = imgs + [j.replace("\\u002F", "/").replace("\\", "/")[:-1] for j in data if 'hdslb.com' in j if not '/' in j if j[-1] == '\\']
+        imgs = [j for j in imgs if j[0:4] == 'http']
         imgID = 0
         for j in imgs:
             imgID += 1
