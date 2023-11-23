@@ -16,7 +16,11 @@ while length == 30:
     pn += 1
     print("页数：" + str(pn))
     api = "https://api.bilibili.com/x/space/article?ps=30&mid=" + uid + "&pn=" + str(pn)
-    res = loads(get(api).content)
+    headers = {
+        "User-Agent": randUA(),
+        "Referer": "https://space.bilibili.com/" + uid
+    }
+    res = loads(get(api, headers=headers).content)
     if (res['code'] != 0):
         print("\033[1;31m错误！\n错误代码：" + str(res['code']) + "\n错误信息：" + res['message'] + "\033[0m\n程序将在3秒后退出...")
         sleep(3)
